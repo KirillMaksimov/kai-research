@@ -1,0 +1,13 @@
+{
+  "name": "kai-research",
+  "owner": {
+    "name": "Kirill Maksimov"
+  },
+  "plugins": [
+    {
+      "name": "kai-research",
+      "source": "./",
+      "description": "Token-tiered deep-research pipeline: wave-planned, code-capped Haiku/Sonnet evidence collection with file-based handoff; synthesis stays on the expensive main-thread model."
+    }
+  ]
+}

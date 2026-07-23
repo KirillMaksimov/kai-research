@@ -1,0 +1,11 @@
+# personal local wiring
+CLAUDE.local.md
+.claude/settings.local.json
+
+# research working dirs
+.research/
+
+# python / misc
+__pycache__/
+*.pyc
+*.log
