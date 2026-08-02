@@ -93,17 +93,33 @@ Build the report from findings files (not from summaries). Template:
 
 1. **Problem & decision criteria** (from §0)
 2. **Landscape** — what exists, grouped
-3. **Options** — table: approach | maturity | cost/effort | fit to criteria | risks | key sources
+3. **Options** — table: approach | maturity | cost/effort | fit to criteria | risks | sources `[n]`
 4. **Contradictions & unknowns** — surfaced, with what would settle them
 5. **Recommendation** — with rationale tied to criteria
 6. **Suggested design** — sketch for the chosen option
 7. **Next probes** — cheapest experiments to de-risk
-8. **Sources appendix** — per findings file: slug, status, source count
+8. **Sources** — the numbered list of primary sources (format below)
+9. **Evidence map** — per findings file: slug, status, source count, which `[n]` it contributed. Audit trail only; never the citation mechanism
 
-Every load-bearing claim in the report cites a findings file (and through it, the original source).
+### Citations: numbered, to primary sources
+
+Findings files are git-ignored and die with the container — a report that cites them is unverifiable the moment the run ends. So every citation points at the **original source URL**, never at a findings path.
+
+- **Body**: put the marker right after the claim as an inline link — `[1](https://example.com/page)`. Several sources behind one claim: `[1](url) [2](url)`. Reuse the same number everywhere that source is cited.
+- **Bottom**, section `## Sources`, ascending, one line each:
+
+  ```
+  [1 - Human-readable title of the page](https://example.com/page) — pub 2026-03-14 — accessed 2026-08-02
+  ```
+
+  `pub undated` when the source carries no publication date.
+- **You assign the numbers at synthesis**, deduplicated **by URL across all findings files** — the same URL surfaced by two agents gets one number. Number in order of first appearance in the report body.
+- Title, pub date and credibility come from the findings `## Sources` table; the access date is that findings file's frontmatter `date` (earliest one wins if a URL appears in several files).
+- Analyst `file:<name>` citations (sibling findings) are **never numbered** — follow them through to the underlying URL in that file and cite that instead.
+- Every load-bearing claim carries at least one `[n]`. A claim with no URL behind it anywhere is not citable: label it explicitly as your own inference, or move it to §4 unknowns.
 
 ## §7 Wrap-up
 
 - Write the report to its §1 home; in the vault also wire `## Key notes` (same turn) and flag Current state/Log for /kai-week.
 - Print run stats: waves, agents per wave (by tier), findings files, est. cost.
-- Findings files are kept (audit trail + re-synthesis); they are disposable copies — the report must stand alone.
+- Findings files are kept (audit trail + re-synthesis) but are disposable copies — the report must stand alone. Check before writing: no findings path (`.research/…`, `_output/research/…`) appears as a citation in the body, and every `[n]` in the body has a line in `## Sources`.

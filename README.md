@@ -35,6 +35,8 @@ flowchart TD
 
 Protocol (`SKILL.md`): scope gate → wave plan → approval → fan-out → gap review (next wave, or stop when a wave yields under ~2 new findings) → optional verify wave (Haiku refuters re-check load-bearing claims) → synthesis (problem/criteria, landscape, options table, contradictions, recommendation, design sketch, next probes, sources) → wrap-up with run stats.
 
+The report cites **primary sources by number** — `[1](url)` inline on load-bearing claims, plus a `## Sources` list at the bottom (`[1 - title](url) — pub date — accessed date`), deduplicated by URL across findings files. Findings files are git-ignored working copies, so they are never the citation target; a per-file evidence map stays in the report as an audit trail only.
+
 Fan-out is a deterministic script, not a prompt: `fanout.workflow.js` checks wave size (≤12), tier/model enum, and the Opus quota (≤2) before any agent runs, then dispatches the wave as one parallel batch under a fixed return schema.
 
 ## Why tiers-as-config
@@ -87,7 +89,7 @@ Not for single-fact lookups (answer those directly) and not a general orchestrat
 
 ## Status
 
-`0.1.1` (`plugin.json`). Early-stage, single author. Born from one very expensive postmortem, validated on real research runs since; agent prompts, workflow schema, and findings format may still change.
+`0.1.2` (`plugin.json`). Early-stage, single author. Born from one very expensive postmortem, validated on real research runs since; agent prompts, workflow schema, and findings format may still change.
 
 ## License
 
