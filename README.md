@@ -39,11 +39,15 @@ flowchart TD
     AN --> FF
     FF --> GR{Gap review}
     GR -->|gaps| WP
-    GR -->|dry / budget| SY[Synthesis]
+    GR -->|dry / budget| VF[Verify: absence claims]
+    VF --> DA[Derived-data audit]
+    DA --> SY[Synthesis: criteria ledger first]
     SY --> RP[Decision report]
 ```
 
-Protocol (`SKILL.md`): scope gate → wave plan → approval → fan-out → gap review (next wave, or stop when a wave yields under ~2 new findings) → optional verify wave (Haiku refuters re-check load-bearing claims) → synthesis (problem/criteria, landscape, options table, contradictions, recommendation, design sketch, next probes, sources) → wrap-up with run stats.
+Protocol (`SKILL.md`): scope gate → wave plan → approval → fan-out → gap review (next wave, or stop when a wave yields under ~2 new findings) → verify wave (Haiku refuters re-check load-bearing claims; **mandatory** for claims that something does not exist) → discard audit for any rule that drops rows from the totals → synthesis (problem/criteria, landscape, options table, contradictions, **criteria ledger**, recommendation, derived data, design sketch, next probes, sources) → wrap-up with run stats.
+
+Three of those steps exist because a run can be internally tidy and still ship something false. A claim of **absence** is the fragile one — a retrieval agent can only show it did not find, so `absence` is a required field in the return schema, such a claim is never repeated as fact before verification, and its probe is inverted ("find one instance", since a single example kills it while a thousand failed searches never establish it). A **criteria ledger** is written before the recommendation, binding each decision criterion to the column that measures it, naming the criteria nothing measured, and naming at least one metric that must *not* move the ranking — otherwise the brightest column in the data becomes the criterion by default. And any rule that **discards rows** publishes what it dropped and gets audited before its numbers reach the report, boundary cases first, because a wrongly dropped row reads as "few of those exist" rather than as a bug.
 
 The report cites **primary sources by number** — `[1](url)` inline on load-bearing claims, plus a `## Sources` list at the bottom (`[1 - title](url) — pub date — accessed date`), deduplicated by URL across findings files. Findings files are git-ignored working copies, so they are never the citation target; a per-file evidence map stays in the report as an audit trail only.
 
@@ -97,7 +101,9 @@ Research mode:
 - Opus sub-questions: **≤2 per wave** — checked in the protocol and the script.
 - Worker: ≤4 WebSearch / ≤6 WebFetch, `maxTurns 16`; tools = WebSearch + WebFetch + Write.
 - Analyst: ≤5 WebSearch / ≤8 WebFetch, `maxTurns 24`; adds Read/Grep/Glob.
-- Return JSON: `tldr` ≤1000 chars, ≤5 contradictions, ≤3 hooks — schema-enforced.
+- Return JSON: `tldr` ≤1000 chars, ≤5 contradictions, ≤5 absence claims, ≤3 hooks — schema-enforced. `absence` is **required**; an empty array is the clean answer.
+- Every planned question names the criterion it serves (`serves`, or the literal `orientation`) — script-enforced, so a wave with an unlabelled question does not run.
+- Verify wave: ≤4 claims, and **mandatory** for any absence claim the recommendation rests on.
 
 Sweep mode:
 
@@ -115,7 +121,7 @@ Both:
 
 ## Status
 
-`0.2.0` (`plugin.json`). Early-stage, single author. Born from one very expensive postmortem, validated on real research runs since; agent prompts, workflow schema, and findings format may still change. Sweep mode is new in 0.2.0 and its defaults are calibrated on one 430-item run, not yet on many.
+`0.3.0` (`plugin.json`). Early-stage, single author. Born from one very expensive postmortem, validated on real research runs since; agent prompts, workflow schema, and findings format may still change. Sweep mode arrived in 0.2.0 and its defaults are calibrated on one 430-item run, not yet on many. 0.3.0 adds the truthfulness layer — required `absence` field, `serves` on every question, mandatory verification of absence claims, criteria ledger, discard audit — from a 25-agent run whose four defects each produced output indistinguishable from a checked one.
 
 ## License
 

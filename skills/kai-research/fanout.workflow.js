@@ -22,6 +22,11 @@ for (const q of A.questions) {
   if (!q.slug || !q.question) throw new Error(`question missing slug or text: ${JSON.stringify(q).slice(0, 120)}`)
   if (!ALLOWED_TIERS.includes(q.tier)) throw new Error(`bad tier "${q.tier}" on ${q.slug}`)
   if (!ALLOWED_MODELS.includes(q.model)) throw new Error(`bad model "${q.model}" on ${q.slug} (haiku|sonnet|opus only)`)
+  // A question that serves no named criterion is how a run ends up ranked on its
+  // brightest column instead of its decision. Planning-side only: not sent to the agent.
+  if (typeof q.serves !== 'string' || !q.serves.trim()) {
+    throw new Error(`question "${q.slug}" has no serves: name the decision criterion it feeds, or the literal "orientation"`)
+  }
 }
 const opusCount = A.questions.filter((q) => q.model === 'opus').length
 if (opusCount > 2) throw new Error(`opus-tier questions capped at 2 per wave, got ${opusCount}`)
@@ -29,13 +34,16 @@ if (opusCount > 2) throw new Error(`opus-tier questions capped at 2 per wave, go
 const RET = {
   type: 'object',
   additionalProperties: false,
-  required: ['file', 'status', 'tldr', 'n_claims', 'contradictions', 'notable'],
+  required: ['file', 'status', 'tldr', 'n_claims', 'contradictions', 'absence', 'notable'],
   properties: {
     file: { type: 'string' },
     status: { enum: ['ok', 'partial', 'failed'] },
     tldr: { type: 'string', maxLength: 1000 },
     n_claims: { type: 'integer' },
     contradictions: { type: 'array', items: { type: 'string', maxLength: 200 }, maxItems: 5 },
+    // Required, not optional: an agent that may omit "what I could not find" omits it,
+    // and the claim resurfaces as a fact in the report. Empty array is the clean answer.
+    absence: { type: 'array', items: { type: 'string', maxLength: 200 }, maxItems: 5 },
     notable: { type: 'array', items: { type: 'string', maxLength: 150 }, maxItems: 3 },
   },
 }
@@ -64,5 +72,6 @@ const results = await pipeline(A.questions, (q, _orig, i) => {
 })
 
 const ok = results.filter(Boolean)
-log(`wave ${wave} done: ${ok.length}/${A.questions.length} returned`)
+const nAbsence = ok.reduce((s, r) => s + (r.absence?.length ?? 0), 0)
+log(`wave ${wave} done: ${ok.length}/${A.questions.length} returned, ${nAbsence} absence claim(s) — none of them a fact until verified`)
 return { wave, results: ok }

@@ -68,6 +68,16 @@ for it (usually a `nothing_found` flag) so the next run does not pay to look aga
 - **Namesakes are the standard failure.** Short or generic item names collide. If you
   cannot tie the source to *this* item, record nothing rather than the wrong thing,
   and say so.
+- **Never construct an identifier.** Do not guess, complete or assemble a URL, ID,
+  handle or slug from an item's name — not even when the pattern looks obvious and
+  the name is certainly right. A URL enters a record only if you saw it in search
+  results or fetched it; otherwise use whatever form the contract gives you for
+  "not verified". Generating a plausible identifier is cheaper for you than checking
+  one, which is exactly why it must be forbidden rather than discouraged: a wrong
+  identifier passes ingest validation and reads downstream as a checked fact.
+- **Never fill a field from your own environment or from the text of your task.** If
+  the source does not say it, the field is empty. A field carrying your own context
+  instead of the item's is not a small error — it is invisible in aggregate.
 
 ## Your reply
 

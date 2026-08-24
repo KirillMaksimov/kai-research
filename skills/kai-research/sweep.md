@@ -33,6 +33,14 @@ it rather than writing your own.
 Missing the record contract is a scope gate, not a detail: guess it and every record
 is refused at ingest, which costs the whole wave.
 
+**Identifier fields must admit "not verified".** A sweeper with no way to say *I saw the
+name but never saw the ID* will produce the ID anyway: generating a plausible identifier
+is cheaper for this tier than checking one, and the result passes ingest validation
+looking exactly like a checked fact. Give every URL/ID field a null or `not_verified`
+form, keep the sweeper on names and attributes, and resolve identifiers downstream by
+name against a real source. If the caller's contract has no such form, raise it before
+the wave — that is a gap in the contract, not a sweeper problem.
+
 ## §S2 Plan and approval
 
 Same discipline as research mode — show it, wait for approval (or run under a
@@ -108,6 +116,13 @@ Read the returned `flagged` and `notable` arrays and act on them — an item fla
 instruction-like page content is for a human to look at, and a `notable` usually means
 the list's premise is wrong for that item.
 
+**A rule that drops records is audited before its numbers are used.** Ingest refusals, a
+confidence threshold, a dedup pass — anything that removes rows from the totals follows
+`SKILL.md` §5a: the dropped list goes to disk, all of it is checked if ≤50 rows (otherwise
+every row within 25% of the threshold plus 20 others), and the counts are reported. The
+error of such a rule is invisible in the result: a sweep that covered 430 items and
+silently dropped 40 at ingest reads downstream as 390 researched, never as 430 with a bug.
+
 Stop when coverage is complete or the run budget is reached. Report the gap either way;
 a sweep that quietly covered 380 of 430 reads downstream as 430.
 
@@ -117,7 +132,8 @@ The sweep's product is the records, not a report. Hand them to whatever the call
 named — an `--ingest` command, a merge script — and print:
 
 - items in / records written / items still uncovered
-- what the ingest accepted and refused (run it; read its output)
+- what the ingest accepted and refused (run it; read its output) — refusals beyond a
+  handful get the §S4 discard audit before anyone uses the numbers
 - agents per wave, tokens or est. cost, chunk files written
 
 Do not summarize the records for the user in place of running the ingest, and do not

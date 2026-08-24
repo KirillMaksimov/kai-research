@@ -44,6 +44,8 @@ run; they do not share files.
 
 If the brief is underspecified (no decision to inform, no constraints, unbounded topic), ask up to 3 scoping questions first. Research serves a decision — pin down: what will be decided, decision criteria, known constraints, what the user already knows.
 
+**Name the decision criteria even when the brief is clear** — one line, before any wave, stated rather than asked. A criterion is what makes one option better than another *for this decision* (revenue per client, retention, time to first result), not a quantity that happens to be measurable. Unnamed criteria do not stay absent: at synthesis the brightest column in the collected data quietly becomes the criterion. Criteria are carried into every wave plan (§2) and settled against measured columns in §6.
+
 ## §1 Output homes
 
 Slug: short kebab-case topic name, stable across waves (e.g. `author-voice`).
@@ -62,10 +64,15 @@ Decompose into **non-overlapping** questions, each an object:
     an author's voice? List parameter families with the key papers.
   tier: worker                   # worker | analyst
   model: haiku                   # haiku | sonnet | opus (opus: max 2 per run)
+  serves: voice-fidelity         # which §0 criterion this question feeds, or a literal:
+                                 # `orientation` (maps the field, scores no option)
+                                 # `verification` (a §5 refuter or existence probe)
   done_means: parameter families named with ≥3 citable sources
 ```
 
 Routing rule: *enumerate/lookup/what-exists* → worker/haiku; *compare/credibility/tradeoffs/reconcile* → analyst/sonnet; *sub-design problem* → analyst/opus (≤2). Anti-overlap check: no two questions should fetch the same sources; scope each with explicit exclusions if needed.
+
+**`serves` is required and the script enforces it** — a wave with an unlabelled question does not run. Say it plainly in the plan: which criterion each question feeds, and which criteria no question feeds. A criterion nobody measures is decided in one of two ways, never a third: it is dropped from the decision, or it is carried to §6 as explicitly unmeasured. What it must not do is survive as a proxy nobody named.
 
 Budgets: wave ≤8 questions default (hard 12); run budget `max_agents` default **16**. Per-item evaluation of a known list is not a research wave — it is sweep mode, with its own budgets. The session-wide circuit breaker is `CLAUDE_CODE_MAX_SUBAGENTS_PER_SESSION` in settings — never touch it per-run, and never rely on it: it counts agents, not concurrency and not tokens.
 
@@ -80,26 +87,64 @@ args = {
   "outdir": "<absolute findings dir>",
   "slug": "<slug>", "wave": <N>, "today": "<YYYY-MM-DD>",
   "max_agents": <run budget>,
-  "questions": [ { "slug", "question", "tier", "model", "done_means" }, ... ]
+  "questions": [ { "slug", "question", "tier", "model", "serves", "done_means" }, ... ]
 }
 ```
 
 The script throws on any budget violation; it runs in the background — do other useful work or wait for the completion notification. `today` must be passed (workflow scripts cannot read the clock).
 
-**Fallback when the Workflow tool is unavailable** (other host/CLI): spawn the wave as ONE parallel batch of Agent calls — `subagent_type: kai-research:kai-research-worker|kai-research:kai-research-analyst` (plugin agents register namespaced), `model` from the plan, same per-question prompt shape as the script builds (question + done_means + exact file path + today). Count = the approved list, nothing more.
+**Fallback when the Workflow tool is unavailable** (other host/CLI): spawn the wave as ONE parallel batch of Agent calls — `subagent_type: kai-research:kai-research-worker|kai-research:kai-research-analyst` (plugin agents register namespaced), `model` from the plan, same per-question prompt shape as the script builds (question + done_means + exact file path + today). Count = the approved list, nothing more. Without the script there is no return schema and no `serves` check: state the return shape in the prompt yourself — `absence` array included — treat a reply missing it as a failed agent, and check the `serves` labels by eye before spawning.
 
 ## §4 Gap review → next wave or stop
 
-After each wave: read the returned summaries; read findings files — **all of them in full while the run has ≤12 files** (they are pre-distilled; this is cheap), summaries-then-selective beyond that. Then decide:
+After each wave: read the returned summaries; read findings files — **all of them in full while the run has ≤12 files** (they are pre-distilled; this is cheap), summaries-then-selective beyond that.
+
+**Three checks before you decide anything.** Each of them has cost a run once, and each is cheap here and expensive later:
+
+- **Absence claims.** Every entry in a return's `absence` array is a claim that something does not exist. A retrieval agent cannot prove absence — it can only prove it did not find. Until §5 says otherwise such a claim is *"not found in N searches"*, never a fact: not in the report, and **not in what you say to the user in chat**. If the recommendation would rest on it, it goes on the §5 list now. The two claims that survived to the user as facts in the run this rule comes from were both claims of absence, and both were false.
+- **Self-contradiction inside one file.** Does a file's TL;DR (or Assessment) contradict its own Findings rows or Sources table? One agent listed directory sites with category taxonomies and concluded in the same file that no category counters exist. Contradictions *between* files are §6 material. A contradiction *within* one file is a defect: re-ask the question or drop the conclusion — do not carry it forward.
+- **Unverified identifiers.** A URL with no title in that file's `## Sources` table was most likely never opened. Do not cite it and do not build on it; if the entity matters, resolve it deterministically by name (see §5a) rather than trusting a constructed link.
+
+Then decide:
 
 - **Gaps or promising leads** → propose wave N+1 (same format, deep-dives welcome: specific papers/repos/products surfaced in wave N) → approval (or envelope).
 - **Dry** → stop. Dry = the last wave produced fewer than ~2 genuinely new decision-relevant findings, or the run budget is reached.
 
 Adaptivity lives here — at the top, with the global view — never at the leaves.
 
-## §5 Optional verify wave
+## §5 Verify wave — optional in general, mandatory for absence claims
 
-When the decision is high-stakes, or contradictions touch claims the recommendation would rest on: pick the ≤4 load-bearing claims and spawn one refuter each (worker/haiku, prompt: "try to refute this claim with sources; default to refuted if evidence is weak"). Treat surviving claims as verified in the report; killed claims get re-researched or flagged.
+**Optional.** When the decision is high-stakes, or contradictions touch claims the recommendation would rest on: pick the ≤4 load-bearing claims and spawn one refuter each (worker/haiku, prompt: "try to refute this claim with sources; default to refuted if evidence is weak"). Treat surviving claims as verified in the report; killed claims get re-researched or flagged.
+
+**Mandatory.** Every absence claim the recommendation rests on is verified *before* the report is written and *before* it is stated to anyone as fact. Same ≤4 budget: if more than four are load-bearing, verify the four carrying the most weight and label the rest `unverified` in the report.
+
+An absence claim takes the **opposite prompt shape** — not a refuter, an existence probe:
+
+> Find ONE instance of X. Success is a single verifiable example with a URL — report it and stop. If you find none, list every query you ran.
+
+The asymmetry is the entire point. One example kills a claim of absence; a thousand failed searches never establish it. A refuter aimed at *"X does not exist"* is being asked to prove a negative: it will come back agreeing, and the agreement carries no information.
+
+Verify questions are spawned through the same §3 script and count against the run budget; their `serves` is the literal `verification`.
+
+Outcome per claim, carried into §6:
+
+- **verified-absent** — the probe found nothing either. Still written as *"not found across N+M searches"*, never as "does not exist"; two agents failing is evidence, not proof.
+- **refuted** — an example exists. The claim dies, and anything that rested on it is re-derived before the report is written.
+- **unverified** — out of budget. Labelled as such wherever it appears.
+
+## §5a Derived data — filters, thresholds, dedup
+
+Findings are not always the last layer. When you build a computed dataset between findings and report — a resolver that turns names into channels, a scoring column, a classifier deciding which rows count — the rules you invent there are un-reviewed code that moves the numbers. The dangerous kind is a rule that **removes items from the totals**, because its error is invisible in the result: fifteen wrongly dropped rows read as "few of those exist", not as a bug. In the run this section comes from, one such rule dropped 40 channels, 15 of them wrongly, and the affected segment's total moved by an order of magnitude — found only because the user happened to ask about one case.
+
+For every rule that drops, merges or reclassifies rows:
+
+1. **State it as code or an explicit predicate**, never apply it by eye. It goes into the report in the form you can state.
+2. **Write the discarded list to disk** beside the findings — `<findings dir>/discarded-<rule>.md`, one row per dropped item: the item, the condition it failed, the value that tripped it.
+3. **Audit it before the numbers enter the report**, not when someone asks. All rows if ≤50; above that, every row **within 25% of the threshold** plus 20 others. Boundary first, because that is where a threshold rule fails: a 20-minute cut drops exactly the short-format shows of the expert niche it was built to keep.
+4. **Check dedup in the same pass.** Two names resolving to one entity is a double count — the mirror error of a wrong discard, produced by the same resolver, and invisible in the same way.
+5. **Report it** — §6 item 7, with a one-line pointer wherever the affected numbers appear.
+
+A filter introduced mid-run to make the numbers clean is itself a finding: it encodes an assumption about what counts, and that assumption belongs in the report next to the numbers it produced.
 
 ## §6 Synthesis (main thread only)
 
@@ -108,12 +153,17 @@ Build the report from findings files (not from summaries). Template:
 1. **Problem & decision criteria** (from §0)
 2. **Landscape** — what exists, grouped
 3. **Options** — table: approach | maturity | cost/effort | fit to criteria | risks | sources `[n]`
-4. **Contradictions & unknowns** — surfaced, with what would settle them
-5. **Recommendation** — with rationale tied to criteria
-6. **Suggested design** — sketch for the chosen option
-7. **Next probes** — cheapest experiments to de-risk
-8. **Sources** — the numbered list of primary sources (format below)
-9. **Evidence map** — per findings file: slug, status, source count, which `[n]` it contributed. Audit trail only; never the citation mechanism
+4. **Contradictions & unknowns** — surfaced, with what would settle them; every absence claim with its §5 outcome (verified-absent / refuted / unverified)
+5. **Criteria ledger** — written **before** the recommendation below it, in three parts:
+   - a table `criterion | the measured column that speaks to it | direction (higher is better / lower is better)`
+   - `Not measured:` — the §0 criteria with no column behind them, named. A criterion that disappears silently here is how a recommendation ends up ranked on something else
+   - `Does not move the decision:` — at least one metric that *is* in the data and must not drive the ranking, with why. Every dataset has a brightest column; naming it is what stops it from becoming the criterion by default
+6. **Recommendation** — rationale tied to the ledger. Every ordering, ranking or "first, then" traces to a column named in the ledger table; where it traces to nothing, it is your inference and says so
+7. **Derived data** (only when §5a applies) — each discard/dedup rule: the predicate, N dropped, N audited, N wrongly dropped and returned, whether the conclusion is threshold-sensitive
+8. **Suggested design** — sketch for the chosen option
+9. **Next probes** — cheapest experiments to de-risk
+10. **Sources** — the numbered list of primary sources (format below)
+11. **Evidence map** — per findings file: slug, status, source count, which `[n]` it contributed. Audit trail only; never the citation mechanism
 
 ### Citations: numbered, to primary sources
 
@@ -131,9 +181,18 @@ Findings files are git-ignored and die with the container — a report that cite
 - Title, pub date and credibility come from the findings `## Sources` table; the access date is that findings file's frontmatter `date` (earliest one wins if a URL appears in several files).
 - Analyst `file:<name>` citations (sibling findings) are **never numbered** — follow them through to the underlying URL in that file and cite that instead.
 - Every load-bearing claim carries at least one `[n]`. A claim with no URL behind it anywhere is not citable: label it explicitly as your own inference, or move it to §4 unknowns.
+- **A URL with no title in any findings `## Sources` row is presumed constructed, not visited** — the cheap tier produces a plausible identifier faster than it checks one. Do not give it a number. Either resolve the entity by name against a real source, or cite the name without a link.
 
 ## §7 Wrap-up
 
 - Write the report to its §1 home; in the vault also wire `## Key notes` (same turn) and flag Current state/Log for /kai-week.
-- Print run stats: waves, agents per wave (by tier), findings files, est. cost.
-- Findings files are kept (audit trail + re-synthesis) but are disposable copies — the report must stand alone. Check before writing: no findings path (`.research/…`, `_output/research/…`) appears as a citation in the body, and every `[n]` in the body has a line in `## Sources`.
+- Print run stats: waves, agents per wave (by tier), findings files, est. cost — plus three lines that print **on every run, including clean ones**:
+
+  ```
+  criteria:      <n> declared / <n> measured / <n> unmeasured
+  absence claims: none | <n> (verified-absent <k> / refuted <m> / unverified <p>)
+  discard rules:  none | <rule> — dropped <n>, audited <n>, wrongly dropped <n>
+  ```
+
+  They print unconditionally on purpose. A check that produces output only when it finds something is indistinguishable from a check that never ran, and all three of these were skipped silently in the run they come from.
+- Findings files are kept (audit trail + re-synthesis) but are disposable copies — the report must stand alone. Check before writing: no findings path (`.research/…`, `_output/research/…`) appears as a citation in the body; every `[n]` in the body has a line in `## Sources`; every ranking in the recommendation traces to a ledger column; no absence claim appears as a fact without its §5 outcome.

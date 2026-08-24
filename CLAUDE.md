@@ -13,6 +13,11 @@ Claude Code plugin: decision-oriented research pipeline that keeps the expensive
 | Search/fetch counts | agent prompt caps + `maxTurns` backstop | (no harness knob exists) |
 | Crash loss bounded | sweep `flush_every` (≤10) + the §S4 coverage gate | an agent's promise to save its work |
 | Runaway circuit breaker | optional `CLAUDE_CODE_MAX_SUBAGENTS_PER_SESSION` in user settings env | — (it counts agents, not tokens) |
+| Criteria bound to data | `serves` required on every planned question (`fanout.workflow.js` throws) + the §6 criteria ledger, written before the recommendation | "rationale tied to criteria" as prose — it passes while the ranking runs on the brightest column |
+| Absence claims surfaced | `absence` **required** in the fanout return schema + the mandatory §5 existence probe | an agent's own wording in its TL;DR |
+| Discarded data audited | the dropped list on disk + audit counts in the §7 run stats, printed even when clean (§5a) | the totals looking plausible |
+
+**The truthfulness layer (0.3.0)** comes from one 25-agent run (2026-08-06) in which all four defects produced output a reader could not tell from a checked one: a recommendation ranked on view counts, a metric unrelated to the decision; two false claims of absence already stated to the user as facts; fabricated Spotify/Apple identifiers under correct show names; and an unaudited classifier that dropped 15 of 40 channels wrongly, moving one segment's total by an order of magnitude. Each fix is shaped to leave a visible artefact — a required schema field, a file on disk, a line printed even when nothing is wrong — because the prose version of every one of these rules already existed and was formally satisfied at the moment it failed. Do not soften them back into advice.
 
 Never spawn `general-purpose` for research fan-out: its tools are `*`, so it inherits Agent and can fan out again underneath you. Observed 2026-08-08: two of six such agents spawned six sub-agents each — 36 researchers on one budget, session limit blown, four of five slices lost.
 
