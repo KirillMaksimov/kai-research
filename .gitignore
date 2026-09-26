@@ -2,8 +2,8 @@
 CLAUDE.local.md
 .claude/settings.local.json
 
-# research working dirs
-.research/
+# research working dirs (findings of runs over this repo itself)
+.kai/.research/
 
 # python / misc
 __pycache__/

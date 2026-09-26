@@ -51,7 +51,7 @@ If the brief is underspecified (no decision to inform, no constraints, unbounded
 Slug: short kebab-case topic name, stable across waves (e.g. `author-voice`).
 
 - **In the KaiSpace vault** (detect: `_meta/vault-structure.md` exists): findings → `_output/research/<slug>/` (git-ignored); report → a committed note in the owning project folder, wired into that project's `_context.md` `## Key notes` the same turn; Current state/Log updates are flagged for /kai-week, not written.
-- **Any other repo**: findings → `.research/<slug>/` (suggest adding to .gitignore); report → the repo's docs home or `.research/<slug>/report.md`.
+- **Any other repo**: findings → `.kai/.research/<slug>/` (`.kai/` at the repo root holds every kai plugin's working folder); before the first write, lay `.kai/.research/.gitignore` holding the single line `*` if it is not there, so the findings stay out of git without touching the repo's own `.gitignore`; report → the repo's docs home or `.kai/.research/<slug>/report.md`.
 
 ## §2 Wave planning
 
@@ -195,4 +195,4 @@ Findings files are git-ignored and die with the container — a report that cite
   ```
 
   They print unconditionally on purpose. A check that produces output only when it finds something is indistinguishable from a check that never ran, and all three of these were skipped silently in the run they come from.
-- Findings files are kept (audit trail + re-synthesis) but are disposable copies — the report must stand alone. Check before writing: no findings path (`.research/…`, `_output/research/…`) appears as a citation in the body; every `[n]` in the body has a line in `## Sources`; every ranking in the recommendation traces to a ledger column; no absence claim appears as a fact without its §5 outcome.
+- Findings files are kept (audit trail + re-synthesis) but are disposable copies — the report must stand alone. Check before writing: no findings path (`.kai/.research/…`, `_output/research/…`) appears as a citation in the body; every `[n]` in the body has a line in `## Sources`; every ranking in the recommendation traces to a ledger column; no absence claim appears as a fact without its §5 outcome.

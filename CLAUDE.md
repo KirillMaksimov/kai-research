@@ -55,7 +55,7 @@ Enable at **user** level (not project) — the pipeline must work from any repo.
 
 ## Outputs
 
-- Research mode — findings: `.research/<slug>/` in the working repo (git-ignore it), or a caller-specified directory. Report: written by the main thread wherever the caller keeps research notes.
+- Research mode — findings: `.kai/.research/<slug>/` in the working repo (`.kai/.research/.gitignore` holding `*` keeps them out of git; `.kai/` at the repo root holds every kai plugin's working folder), or a caller-specified directory. Report: written by the main thread wherever the caller keeps research notes.
 - Sweep mode — record chunks: `<outdir>/<slug>-w<N>-s<slice>-c<chunk>.jsonl` in the caller's shape. The deliverable is what the caller's ingest accepts, not a report.
 
 ## Callers
