@@ -1,7 +1,7 @@
 {
   "name": "kai-research",
   "description": "Token-tiered deep-research pipeline (the Researcher hire from agents_swarm): /kai-research plans in the expensive main-thread model and fans out capped Haiku/Sonnet subagents via deterministic workflows. Two modes — research a hard problem into a decision report, or sweep a known list with the same question per item into caller-schema records. Evidence lands on disk; synthesis never leaves the main thread. Replaces judgment-based orchestration (/o) with code-enforced budgets.",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "author": {
     "name": "Kirill Maksimov"
   }
