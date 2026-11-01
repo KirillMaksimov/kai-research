@@ -121,7 +121,7 @@ Both:
 
 ## Status
 
-`0.3.0` (`plugin.json`). Early-stage, single author. Born from one very expensive postmortem, validated on real research runs since; agent prompts, workflow schema, and findings format may still change. Sweep mode arrived in 0.2.0 and its defaults are calibrated on one 430-item run, not yet on many. 0.3.0 adds the truthfulness layer — required `absence` field, `serves` on every question, mandatory verification of absence claims, criteria ledger, discard audit — from a 25-agent run whose four defects each produced output indistinguishable from a checked one.
+`0.4.2` (`plugin.json`). Early-stage, single author. Born from one very expensive postmortem, validated on real research runs since; agent prompts, workflow schema, and findings format may still change. Sweep mode arrived in 0.2.0 and its defaults are calibrated on one 430-item run, not yet on many. 0.3.0 adds the truthfulness layer — required `absence` field, `serves` on every question, mandatory verification of absence claims, criteria ledger, discard audit — from a 25-agent run whose four defects each produced output indistinguishable from a checked one.
 
 ## License
 
